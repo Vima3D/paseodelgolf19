@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { menuCategories } from "../data/menuData";
 import { ArrowLeft, UtensilsCrossed, ChevronRight } from "lucide-react";
 
@@ -6,11 +6,76 @@ export function CategoryGrid({ currentLang = "ES", t }) {
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [selectedSubcategory, setSelectedSubcategory] = useState(null);
 
+  // Synchronize with browser back / forward navigation (popstate)
+  useEffect(() => {
+    const handlePopState = (event) => {
+      const state = event.state;
+      if (state && state.categoryId) {
+        const cat = menuCategories.find((c) => c.id === state.categoryId);
+        if (cat) {
+          setSelectedCategory(cat);
+          if (state.subcategoryId) {
+            const sub = cat.subcategories?.find(
+              (s) => s.id === state.subcategoryId
+            );
+            setSelectedSubcategory(sub || null);
+          } else {
+            setSelectedSubcategory(null);
+          }
+        } else {
+          setSelectedCategory(null);
+          setSelectedSubcategory(null);
+        }
+      } else {
+        setSelectedCategory(null);
+        setSelectedSubcategory(null);
+      }
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+    };
+  }, []);
+
   // Helper to safely obtain localized string
   const getLoc = (obj) => {
     if (!obj) return "";
     if (typeof obj === "string") return obj;
     return obj[currentLang] || obj.ES || obj.EN || "";
+  };
+
+  const handleSelectCategory = (cat) => {
+    setSelectedCategory(cat);
+    setSelectedSubcategory(null);
+    window.history.pushState(
+      { categoryId: cat.id, subcategoryId: null },
+      ""
+    );
+  };
+
+  const handleSelectSubcategory = (sub) => {
+    setSelectedSubcategory(sub);
+    window.history.pushState(
+      { categoryId: selectedCategory.id, subcategoryId: sub.id },
+      ""
+    );
+  };
+
+  const handleBack = () => {
+    if (selectedSubcategory) {
+      if (window.history.state && window.history.state.subcategoryId) {
+        window.history.back();
+      } else {
+        setSelectedSubcategory(null);
+      }
+    } else if (selectedCategory) {
+      if (window.history.state && window.history.state.categoryId) {
+        window.history.back();
+      } else {
+        setSelectedCategory(null);
+      }
+    }
   };
 
   // Level 1: Main Category Grid
@@ -25,7 +90,7 @@ export function CategoryGrid({ currentLang = "ES", t }) {
                 <article
                   key={cat.id}
                   className="category-card"
-                  onClick={() => setSelectedCategory(cat)}
+                  onClick={() => handleSelectCategory(cat)}
                 >
                   <div className="card-image-wrapper">
                     <img src={cat.img} alt={catTitle} className="card-image" />
@@ -54,7 +119,7 @@ export function CategoryGrid({ currentLang = "ES", t }) {
         <div className="container">
           <div className="section-header">
             <button
-              onClick={() => setSelectedCategory(null)}
+              onClick={handleBack}
               className="back-btn"
             >
               <ArrowLeft size={20} />
@@ -70,7 +135,7 @@ export function CategoryGrid({ currentLang = "ES", t }) {
                 <article
                   key={sub.id}
                   className="category-card subcategory-card"
-                  onClick={() => setSelectedSubcategory(sub)}
+                  onClick={() => handleSelectSubcategory(sub)}
                 >
                   <div className="card-image-wrapper">
                     <img src={sub.img} alt={subTitle} className="card-image" />
@@ -98,7 +163,7 @@ export function CategoryGrid({ currentLang = "ES", t }) {
       <div className="container">
         <div className="section-header">
           <button
-            onClick={() => setSelectedSubcategory(null)}
+            onClick={handleBack}
             className="back-btn"
           >
             <ArrowLeft size={20} />
