@@ -17,15 +17,15 @@ export function useOpeningStatus() {
       const openDays = [0, 1, 2, 5, 6]; // Sun, Mon, Tue, Fri, Sat
       let open = false;
 
-      if (openDays.includes(day) && minutesToday >= 13 * 60) {
+      if (openDays.includes(day) && minutesToday >= 12 * 60) {
         open = true;
       }
 
-      // Check if past midnight (00:00 - 00:59) and previous day was open
-      const previousDay = (day + 6) % 7;
-      if (openDays.includes(previousDay) && minutesToday < 60) {
-        open = true;
-      }
+      // // Check if past midnight (00:00 - 00:59) and previous day was open
+      // const previousDay = (day + 6) % 7;
+      // if (openDays.includes(previousDay) && minutesToday < 60) {
+      //   open = true;
+      // }
 
       setIsOpen(open);
     }
